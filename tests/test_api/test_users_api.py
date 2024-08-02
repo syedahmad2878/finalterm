@@ -1,11 +1,16 @@
-from builtins import str
+from unittest.mock import patch, MagicMock
+from app.utils.minio import MinioClient
 import pytest
 from httpx import AsyncClient
 from app.main import app
 from app.models.user_model import User, UserRole
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import hash_password
-from app.services.jwt_service import decode_token  # Import your FastAPI app
+from app.services.jwt_service import decode_token
+from app.services.file_service import FileService
+from uuid import uuid4
+from fastapi import status
+import asyncio
 
 # Example of a test function using the async_client fixture
 @pytest.mark.asyncio
@@ -190,3 +195,115 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_jpeg(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.jpg"), \
+         patch.object(MinioClient, 'upload_file', return_value=None), \
+         patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
+        file_data = {'file': ('profile_picture.jpg', b'fake image data', 'image/jpeg')}
+        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_200_OK
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_png(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.png"), \
+         patch.object(MinioClient, 'upload_file', return_value=None), \
+         patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
+        file_data = {'file': ('profile_picture.png', b'fake image data', 'image/png')}
+        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_200_OK
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_gif(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.gif"), \
+         patch.object(MinioClient, 'upload_file', return_value=None), \
+         patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
+        file_data = {'file': ('profile_picture.gif', b'fake image data', 'image/gif')}
+        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_200_OK
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_invalid_file_type(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    file_data = {'file': ('invalid.txt', b'fake text data', 'text/plain')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Invalid file format. Only JPEG, PNG, and GIF are allowed."
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_empty_file(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    file_data = {'file': ('empty.jpg', b'', 'image/jpeg')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json()["detail"] == "File is empty."
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_large_file(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    large_file_data = b'a' * (10 * 1024 * 1024)  # 10MB fake file data
+    file_data = {'file': ('large_file.jpg', large_file_data, 'image/jpeg')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json()["detail"] == "File is too large."
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_missing_file(async_client: AsyncClient, admin_user, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    user_id = admin_user.id
+
+    # Simulate missing file
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", headers=headers)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_missing_authorization(async_client: AsyncClient, admin_user, mocker):
+    user_id = admin_user.id
+
+    file_data = {'file': ('profile_picture.jpg', b'fake image data', 'image/jpeg')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data)
+    
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_invalid_user_id(async_client: AsyncClient, admin_user, admin_token, mocker):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    invalid_user_id = "invalid_user_id"
+
+    file_data = {'file': ('profile_picture.jpg', b'fake image data', 'image/jpeg')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={invalid_user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+@pytest.mark.asyncio
+async def test_upload_profile_picture_insufficient_permissions(async_client: AsyncClient, anonymous_user, anonymous_token):
+    headers = {"Authorization": f"Bearer {anonymous_token}"}
+    user_id = anonymous_user.id
+
+    file_data = {'file': ('profile_picture.jpg', b'fake image data', 'image/jpeg')}
+    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    
+    assert response.status_code == status.HTTP_403_FORBIDDEN

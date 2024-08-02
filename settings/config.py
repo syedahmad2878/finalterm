@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     postgres_user: str = Field(default='user', description="PostgreSQL username")
     postgres_password: str = Field(default='password', description="PostgreSQL password")
     postgres_server: str = Field(default='localhost', description="PostgreSQL server address")
-    postgres_port: str = Field(default='5432', description="PostgreSQL port")
+    postgres_port: str = Field(default='5050', description="PostgreSQL port")
     postgres_db: str = Field(default='myappdb', description="PostgreSQL database name")
     # Discord configuration
     discord_bot_token: str = Field(default='NONE', description="Discord bot token")
@@ -40,7 +40,13 @@ class Settings(BaseSettings):
     smtp_port: int = Field(default=2525, description="SMTP port for sending emails")
     smtp_username: str = Field(default='your-mailtrap-username', description="Username for SMTP server")
     smtp_password: str = Field(default='your-mailtrap-password', description="Password for SMTP server")
-
+    # Minio settings
+    minio: str = Field(default='minio', description="Minio server endpoint")
+    port: str = Field(default='9000', description="Minio server endpoint")
+    minio_access_key: str = Field(default='minioadmin', description="Access key for Minio server")
+    minio_secret_key: str = Field(default='minioadmin', description="Secret key for Minio server")
+    minio_bucket_name: str = Field(default='profile-pictures', description="Default bucket name for Minio")
+    isSecure: bool = Field(default=False, description="secure upload")
 
     class Config:
         # If your .env file is not in the root directory, adjust the path accordingly.
