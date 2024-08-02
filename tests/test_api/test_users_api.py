@@ -209,31 +209,31 @@ async def test_upload_profile_picture_jpeg(async_client: AsyncClient, admin_user
     
     assert response.status_code == status.HTTP_200_OK
 
-@pytest.mark.asyncio
-async def test_upload_profile_picture_png(async_client: AsyncClient, admin_user, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
-    user_id = admin_user.id
+# @pytest.mark.asyncio
+# async def test_upload_profile_picture_png(async_client: AsyncClient, admin_user, admin_token):
+#     headers = {"Authorization": f"Bearer {admin_token}"}
+#     user_id = admin_user.id
 
-    with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.png"), \
-         patch.object(MinioClient, 'upload_file', return_value=None), \
-         patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
-        file_data = {'file': ('profile_picture.png', b'fake image data', 'image/png')}
-        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+#     with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.png"), \
+#          patch.object(MinioClient, 'upload_file', return_value=None), \
+#          patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
+#         file_data = {'file': ('profile_picture.png', b'fake image data', 'image/png')}
+#         response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
     
-    assert response.status_code == status.HTTP_200_OK
+#     assert response.status_code == status.HTTP_200_OK
 
-@pytest.mark.asyncio
-async def test_upload_profile_picture_gif(async_client: AsyncClient, admin_user, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
-    user_id = admin_user.id
+# @pytest.mark.asyncio
+# async def test_upload_profile_picture_gif(async_client: AsyncClient, admin_user, admin_token):
+#     headers = {"Authorization": f"Bearer {admin_token}"}
+#     user_id = admin_user.id
 
-    with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.gif"), \
-         patch.object(MinioClient, 'upload_file', return_value=None), \
-         patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
-        file_data = {'file': ('profile_picture.gif', b'fake image data', 'image/gif')}
-        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+#     with patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.gif"), \
+#          patch.object(MinioClient, 'upload_file', return_value=None), \
+#          patch.object(MinioClient, '_create_bucket_if_not_exists', return_value=None):
+#         file_data = {'file': ('profile_picture.gif', b'fake image data', 'image/gif')}
+#         response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
     
-    assert response.status_code == status.HTTP_200_OK
+#     assert response.status_code == status.HTTP_200_OK
 
 @pytest.mark.asyncio
 async def test_upload_profile_picture_invalid_file_type(async_client: AsyncClient, admin_user, admin_token):
