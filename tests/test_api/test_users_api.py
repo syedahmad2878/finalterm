@@ -6,6 +6,10 @@ from app.models.user_model import User, UserRole
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import hash_password
 from app.services.jwt_service import decode_token  # Import your FastAPI app
+from app.services.file_service import FileService
+from uuid import uuid4
+from fastapi import status
+import asyncio
 
 # Example of a test function using the async_client fixture
 @pytest.mark.asyncio

@@ -196,6 +196,21 @@ async def admin_user(db_session: AsyncSession):
     return user
 
 @pytest.fixture
+async def anonymous_user(db_session: AsyncSession):
+    user = User(
+        nickname="ANONYMOUS_user",
+        email="ANONYMOUS@example.com",
+        first_name="John",
+        last_name="Doe",
+        hashed_password="securepassword",
+        role=UserRole.ANONYMOUS,
+        is_locked=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return user
+
+@pytest.fixture
 async def manager_user(db_session: AsyncSession):
     user = User(
         nickname="manager_john",
@@ -215,6 +230,12 @@ async def manager_user(db_session: AsyncSession):
 def admin_token(admin_user):
     # Assuming admin_user has an 'id' and 'role' attribute
     token_data = {"sub": str(admin_user.id), "role": admin_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
+
+@pytest.fixture(scope="function")
+def anonymous_token(anonymous_user):
+    # Assuming admin_user has an 'id' and 'role' attribute
+    token_data = {"sub": str(anonymous_user.id), "role": anonymous_user.role.name}
     return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
 @pytest.fixture(scope="function")

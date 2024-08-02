@@ -199,3 +199,21 @@ class UserService:
             await session.commit()
             return True
         return False
+
+    @classmethod
+    async def update_profile_picture(cls, session: AsyncSession, user_id: UUID, profile_picture_url: str) -> Optional[User]:
+        try:
+            query = update(User).where(User.id == user_id).values(profile_picture_url=profile_picture_url).execution_options(synchronize_session="fetch")
+            result = await cls._execute_query(session, query)
+            if result:
+                updated_user = await cls.get_by_id(session, user_id)
+                if updated_user:
+                    session.refresh(updated_user)  # Explicitly refresh the updated user object
+                    logger.info(f"User {user_id} profile picture updated successfully.")
+                    return updated_user
+                else:
+                    logger.error(f"User {user_id} not found after update attempt.")
+            return None
+        except Exception as e:
+            logger.error(f"Error during profile picture update: {e}")
+            return None
