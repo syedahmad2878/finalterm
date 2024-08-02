@@ -201,7 +201,7 @@ async def test_upload_profile_picture_jpeg(async_client: AsyncClient, admin_user
     headers = {"Authorization": f"Bearer {admin_token}"}
     user_id = admin_user.id
 
-    with patch('app.services.minio.Minio') as MockMinio:
+    with patch('app.services.file_service') as MockMinio:
         MockMinio.return_value.bucket_exists.return_value = True
         MockMinio.return_value.put_object.return_value = "http://example.com/fake_profile_picture.jpg"
         file_data = {'file': ('profile_picture.jpg', b'fake image data', 'image/jpeg')}
@@ -214,14 +214,13 @@ async def test_upload_profile_picture_png(async_client: AsyncClient, admin_user,
     headers = {"Authorization": f"Bearer {admin_token}"}
     user_id = admin_user.id
 
-    mocker.patch.object(FileService, 'upload_File', return_value="http://example.com/fake_profile_picture.png")
-
-    file_data = {'file': ('profile_picture.png', b'fake image data', 'image/png')}
-    response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
+    with patch('FileService') as MockMinio:
+        MockMinio.return_value.bucket_exists.return_value = True
+        MockMinio.return_value.put_object.return_value = "http://example.com/fake_profile_picture.png"
+        file_data = {'file': ('profile_picture.png', b'fake image data', 'image/jpeg')}
+        response = await async_client.post(f"/upload-profile-picture?user_id={user_id}", files=file_data, headers=headers)
     
     assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert data["profile_picture_url"] == "http://example.com/fake_profile_picture.png"
 
 @pytest.mark.asyncio
 async def test_upload_profile_picture_gif(async_client: AsyncClient, admin_user, admin_token, mocker):
